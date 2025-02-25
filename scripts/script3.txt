@@ -1,0 +1,62 @@
+#!/bin/bash
+
+if [ $# -ne 4 ]; then
+    echo "Ошибка: скрипт должен запускаться с 4 числовыми параметрами (от 1 до 6)."
+    exit 1
+fi
+
+COLORS=("white" "red" "green" "blue" "purple" "black")
+BG_COLORS=(47 41 42 44 45 40) # ANSI-коды фонов
+FG_COLORS=(37 31 32 34 35 30) # ANSI-коды шрифтов
+
+for arg in "$@"; do
+    if ! [[ "$arg" =~ ^[1-6]$ ]]; then
+        echo "Ошибка: параметры должны быть числами от 1 до 6."
+        exit 1
+    fi
+done
+
+if [ "$1" -eq "$2" ] || [ "$3" -eq "$4" ]; then
+    echo "Ошибка: Цвет фона и шрифта в одном столбце не должны совпадать."
+    exit 1
+fi
+
+HOSTNAME=$(hostname)
+TIMEZONE=$(timedatectl | grep "Time zone" | awk '{print $3, $4, $5}')
+USER=$(whoami)
+OS=$(cat /etc/os-release | grep PRETTY_NAME | cut -d '"' -f2)
+DATE=$(date "+%d %b %Y %T")
+UPTIME=$(uptime -p)
+UPTIME_SEC=$(cat /proc/uptime | awk '{print int($1)}')
+IP=$(hostname -I | awk '{print $1}')
+MASK=$(ip -o -f inet addr show | awk '{print $4}' | cut -d'/' -f2 | head -n 1)
+GATEWAY=$(ip route | grep default | awk '{print $3}')
+RAM_TOTAL=$(free -m | awk '/Mem:/ {printf "%.3f GB", $2/1024}')
+RAM_USED=$(free -m | awk '/Mem:/ {printf "%.3f GB", ($2-$7)/1024}')
+RAM_FREE=$(free -m | awk '/Mem:/ {printf "%.3f GB", $7/1024}')
+SPACE_ROOT=$(df / | awk 'NR==2 {printf "%.2f MB", $2/1024}')
+SPACE_ROOT_USED=$(df / | awk 'NR==2 {printf "%.2f MB", $3/1024}')
+SPACE_ROOT_FREE=$(df / | awk 'NR==2 {printf "%.2f MB", $4/1024}')
+
+BG_NAME="\e[${BG_COLORS[$1-1]}m"
+FG_NAME="\e[${FG_COLORS[$2-1]}m"
+BG_VALUE="\e[${BG_COLORS[$3-1]}m"
+FG_VALUE="\e[${FG_COLORS[$4-1]}m"
+RESET="\e[0m"
+
+echo -e "${BG_NAME}${FG_NAME}HOSTNAME${RESET} = ${BG_VALUE}${FG_VALUE}$HOSTNAME${RESET}"
+echo -e "${BG_NAME}${FG_NAME}TIMEZONE${RESET} = ${BG_VALUE}${FG_VALUE}$TIMEZONE${RESET}"
+echo -e "${BG_NAME}${FG_NAME}USER${RESET} = ${BG_VALUE}${FG_VALUE}$USER${RESET}"
+echo -e "${BG_NAME}${FG_NAME}OS${RESET} = ${BG_VALUE}${FG_VALUE}$OS${RESET}"
+echo -e "${BG_NAME}${FG_NAME}DATE${RESET} = ${BG_VALUE}${FG_VALUE}$DATE${RESET}"
+echo -e "${BG_NAME}${FG_NAME}UPTIME${RESET} = ${BG_VALUE}${FG_VALUE}$UPTIME${RESET}"
+echo -e "${BG_NAME}${FG_NAME}UPTIME_SEC${RESET} = ${BG_VALUE}${FG_VALUE}$UPTIME_SEC${RESET}"
+echo -e "${BG_NAME}${FG_NAME}IP${RESET} = ${BG_VALUE}${FG_VALUE}$IP${RESET}"
+echo -e "${BG_NAME}${FG_NAME}MASK${RESET} = ${BG_VALUE}${FG_VALUE}$MASK${RESET}"
+echo -e "${BG_NAME}${FG_NAME}GATEWAY${RESET} = ${BG_VALUE}${FG_VALUE}$GATEWAY${RESET}"
+echo -e "${BG_NAME}${FG_NAME}RAM_TOTAL${RESET} = ${BG_VALUE}${FG_VALUE}$RAM_TOTAL${RESET}"
+echo -e "${BG_NAME}${FG_NAME}RAM_USED${RESET} = ${BG_VALUE}${FG_VALUE}$RAM_USED${RESET}"
+echo -e "${BG_NAME}${FG_NAME}RAM_FREE${RESET} = ${BG_VALUE}${FG_VALUE}$RAM_FREE${RESET}"
+echo -e "${BG_NAME}${FG_NAME}SPACE_ROOT${RESET} = ${BG_VALUE}${FG_VALUE}$SPACE_ROOT${RESET}"
+echo -e "${BG_NAME}${FG_NAME}SPACE_ROOT_USED${RESET} = ${BG_VALUE}${FG_VALUE}$SPACE_ROOT_USED${RESET}"
+echo -e "${BG_NAME}${FG_NAME}SPACE_ROOT_FREE${RESET} = ${BG_VALUE}${FG_VALUE}$SPACE_ROOT_FREE${RESET}"

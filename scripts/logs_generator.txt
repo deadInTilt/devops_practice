@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Функция для генерации случайных данных
+generate_random_ip() {
+  echo "$((RANDOM % 255 + 1)).$((RANDOM % 255 + 1)).$((RANDOM % 255 + 1)).$((RANDOM % 255 + 1))"
+}
+
+generate_random_status_code() {
+  # Генерация случайного кода ответа из списка
+  codes=("200" "201" "400" "401" "403" "404" "500" "501" "502" "503")
+  echo "${codes[$RANDOM % ${#codes[@]}]}"
+}
+
+generate_random_method() {
+  # Генерация случайного HTTP-метода
+  methods=("GET" "POST" "PUT" "PATCH" "DELETE")
+  echo "${methods[$RANDOM % ${#methods[@]}]}"
+}
+
+generate_random_user_agent() {
+  # Генерация случайного User-Agent
+  agents=("Mozilla" "Google Chrome" "Opera" "Safari" "Internet Explorer" "Microsoft Edge" "Crawler and bot" "Library and net tool")
+  echo "${agents[$RANDOM % ${#agents[@]}]}"
+}
+
+generate_log_for_day() {
+  day="$1"
+  num_requests=$((RANDOM % 901 + 100))  # Генерация случайного числа запросов от 100 до 1000
+  start_date="2025-02-$day"
+  # Генерация записей для одного дня
+  for ((i=0; i<num_requests; i++)); do
+    ip=$(generate_random_ip)
+    status_code=$(generate_random_status_code)
+    method=$(generate_random_method)
+    url="/example/path/$(date +%s%N)"
+    user_agent=$(generate_random_user_agent)
+    date=$(date -d "$start_date + $i minutes" +"[%d/%b/%Y:%H:%M:%S %z]")
+    # Формирование строки лога в формате combined
+    echo "$ip - - $date \"$method $url HTTP/1.1\" $status_code 1234 \"$url\" \"$user_agent\"" >> "nginx_log_day_$day.txt"
+  done
+}
+
+# Генерация логов для 5 дней
+for day in {1..5}; do
+  generate_log_for_day $day
+done
+
+# Пояснение кодов ответа:
+# 200 - OK: Запрос выполнен успешно
+# 201 - Created: Запрос выполнен успешно, но создаётся новый ресурс
+# 400 - Bad Request: Некорректный запрос
+# 401 - Unauthorized: Требуется аутентификация
+# 403 - Forbidden: Запрещено выполнять данный запрос
+# 404 - Not Found: Ресурс не найден
+# 500 - Internal Server Error: Ошибка на сервере
+# 501 - Not Implemented: Метод не поддерживается сервером
+# 502 - Bad Gateway: Проблемы с прокси-сервером или шлюзом
+# 503 - Service Unavailable: Сервис временно недоступен

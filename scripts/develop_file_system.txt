@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Ошибка: скрипт должен запускаться с одним параметром — путем к директории, оканчивающимся на '/'."
+    exit 1
+fi
+
+dir="$1"
+if [[ ! -d "$dir" ]]; then
+    echo "Ошибка: Указанный путь не является директорией."
+    exit 1
+fi
+
+if [[ "$dir" != */ ]]; then
+    echo "Ошибка: Путь должен заканчиваться символом '/'."
+    exit 1
+fi
+
+start_time=$(date +%s.%N)
+
+total_folders=$(find "$dir" -type d | wc -l)
+
+echo "Total number of folders (including all nested ones) = $total_folders"
+echo "TOP 5 folders of maximum size arranged in descending order (path and size):"
+du -ah "$dir" | sort -rh | head -5 | awk '{print NR " - " $2 ", " $1}'
+
+total_files=$(find "$dir" -type f | wc -l)
+echo "Total number of files = $total_files"
+
+echo "Number of:"
+echo "Configuration files (with the .conf extension) = $(find "$dir" -type f -name "*.conf" | wc -l)"
+echo "Text files = $(find "$dir" -type f -exec file --mime-type {} + | grep 'text/plain' | wc -l)"
+echo "Executable files = $(find "$dir" -type f -executable | wc -l)"
+echo "Log files (with the extension .log) = $(find "$dir" -type f -name "*.log" | wc -l)"
+echo "Archive files = $(find "$dir" -type f \( -name "*.zip" -o -name "*.tar" -o -name "*.gz" -o -name "*.bz2" -o -name "*.xz" -o -name "*.7z" \) | wc -l)"
+echo "Symbolic links = $(find "$dir" -type l | wc -l)"
+
+echo "TOP 10 files of maximum size arranged in descending order (path, size and type):"
+find "$dir" -type f -exec du -ah {} + | sort -rh | head -10 | awk '{cmd="file --mime-type "$2; cmd | getline type; close(cmd); print NR " - " $2 ", " $1 ", " type}'
+
+echo "TOP 10 executable files of the maximum size arranged in descending order (path, size and MD5 hash of file):"
+find "$dir" -type f -executable -exec du -ah {} + | sort -rh | head -10 | awk '{cmd="md5sum "$2; cmd | getline md5; close(cmd); print NR " - " $2 ", " $1 ", " md5}'
+
+end_time=$(date +%s.%N)
+execution_time=$(echo "$end_time - $start_time" | bc)
+echo "Script execution time (in seconds) = $execution_time"
